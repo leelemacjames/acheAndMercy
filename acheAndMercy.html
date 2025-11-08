@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Ache and occasional Mercy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Georgia', serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        #video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background: linear-gradient(180deg, #000000 0%, #1a1a1a 50%, #000000 100%);
+        }
+        
+        /* Phase-specific backgrounds */
+        .phase-1 {
+            background: linear-gradient(180deg, #000000 0%, #0a0a0a 100%);
+            transition: background 3s ease;
+        }
+        
+        .phase-2 {
+            background: linear-gradient(45deg, #1a0a00 0%, #330f00 50%, #1a0a00 100%);
+            transition: background 3s ease;
+        }
+        
+        .phase-3 {
+            background: linear-gradient(180deg, #1a1100 0%, #ffaa00 50%, #1a1100 100%);
+            transition: background 3s ease;
+        }
+        
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.6);
+            pointer-events: none;
+        }
+        
+        #age-counter {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            font-size: 48px;
+            font-weight: bold;
+            opacity: 0.8;
+            font-family: 'Courier New', monospace;
+        }
+        
+        #stage-label {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            font-size: 36px;
+            font-style: italic;
+            opacity: 0;
+            transition: opacity 2s ease-in;
+            font-family: 'Georgia', serif;
+        }
+        
+        #stage-label.visible {
+            opacity: 0.7;
+        }
+        
+        #text-display {
+            max-width: 800px;
+            text-align: center;
+            padding: 40px;
+            font-size: 32px;
+            line-height: 1.8;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
+        }
+        
+        .text-line {
+            opacity: 0;
+            transition: opacity 1.5s ease-in;
+            margin: 10px 0;
+        }
+        
+        .text-line.visible {
+            opacity: 1;
+        }
+        
+        #title {
+            font-size: 48px;
+            font-style: italic;
+            opacity: 0;
+            transition: opacity 2s ease-in;
+        }
+        
+        #title.visible {
+            opacity: 0.9;
+        }
+        
+        #controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+            pointer-events: auto;
+        }
+        
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+        
+        #instructions {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 40px;
+            border-radius: 10px;
+            max-width: 700px;
+            pointer-events: auto;
+        }
+        
+        #instructions h2 {
+            margin-bottom: 20px;
+            font-size: 32px;
+        }
+        
+        #instructions p {
+            margin-bottom: 20px;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+        
+        #start-btn {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: #c00;
+            border-color: #c00;
+        }
+        
+        #start-btn:hover {
+            background: #f00;
+        }
+        
+        #start-btn:disabled {
+            background: #666;
+            border-color: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        #countdown {
+            font-size: 72px;
+            font-weight: bold;
+            color: #c00;
+            margin: 20px 0;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .ready-message {
+            font-size: 24px;
+            color: #4a9eff;
+            margin: 20px 0;
+        }
+        
+        .music-link {
+            display: inline-block;
+            color: #4a9eff;
+            text-decoration: none;
+            margin: 15px 10px;
+            padding: 12px 25px;
+            border: 2px solid #4a9eff;
+            border-radius: 5px;
+            transition: all 0.3s;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .music-link:hover {
+            background: rgba(74, 158, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        #info {
+            font-size: 14px;
+            color: #888;
+            margin-top: 20px;
+        }
+        
+        #progress-bar {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            z-index: 3;
+            border-radius: 2px;
+        }
+        
+        #progress {
+            height: 100%;
+            width: 0%;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 2px;
+            transition: width 0.1s linear;
+        }
+    </style>
+</head>
+<body>
+    <div id="instructions">
+        <h2>The Ache and occasional Mercy</h2>
+        <p>A life experience synchronized to<br>"End Of The World Sun" by 65daysofstatic.</p>
+        
+        <p><strong>Choose your music source:</strong></p>
+        <div>
+            <a id="youtube-link" class="music-link" target="_blank" rel="noopener">
+                🎵 YouTube
+            </a>
+            <a id="spotify-link" class="music-link" target="_blank" rel="noopener">
+                🎵 Spotify
+            </a>
+        </div>
+        
+        <div id="countdown"></div>
+        <div class="ready-message" id="ready-msg" style="display:none;">Ready? Click below:</div>
+        
+        <button id="start-btn" disabled>Begin Living</button>
+        
+        <div id="info">
+            The counter will advance 2 years every 10 seconds (0→90 years),<br>
+            and text will appear as the music evolves through its 7:27 runtime.
+        </div>
+    </div>
+    
+    <div id="video-background" class="phase-1"></div>
+    
+    <div id="overlay">
+        <div id="stage-label"></div>
+        <div id="age-counter">0 years</div>
+        <div id="text-display">
+            <div class="text-line" id="line1">We grieve the lives</div>
+            <div class="text-line" id="line2">We never lived,</div>
+            <div class="text-line" id="line3">The chances let pass.</div>
+            <div class="text-line" id="line4">Even the quiet knowing</div>
+            <div class="text-line" id="line5">Of being seen—</div>
+            <div class="text-line" id="line6">By a relative stranger—</div>
+            <div class="text-line" id="line7">Is a small mercy.</div>
+            <div class="text-line" id="line8">Sometimes,</div>
+            <div class="text-line" id="line9">A sliver of sunlight</div>
+            <div class="text-line" id="line10">Is enough</div>
+            <div class="text-line" id="line11">To keep the ache at bay.</div>
+        </div>
+    </div>
+    
+    <div id="progress-bar" style="display: none;">
+        <div id="progress"></div>
+    </div>
+    
+    <div id="controls" style="display: none;">
+        <button id="play-pause">Pause</button>
+        <button id="restart">Restart</button>
+    </div>
+
+    <script>
+        let ageInterval;
+        let textTimeout = [];
+        let currentAge = 0;
+        let startTime = 0;
+        let isRunning = false;
+        let animationFrame;
+        let countdownTimer;
+        
+        const TOTAL_DURATION = 447; // 7:27 in seconds
+        
+        // Setup music link click handlers with countdown
+        function setupMusicLink(linkId, url) {
+            document.getElementById(linkId).addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Open music in new tab
+                window.open(url, '_blank', 'noopener,noreferrer');
+                
+                // Start countdown
+                startCountdown();
+            });
+        }
+        
+        setupMusicLink('youtube-link', 'https://www.youtube.com/watch?v=TUs6-tTYPEM');
+        setupMusicLink('spotify-link', 'https://open.spotify.com/track/5UVG9k2oce8U4a1XHS9EU0');
+        
+        function startCountdown() {
+            let count = 5;
+            const countdownEl = document.getElementById('countdown');
+            const startBtn = document.getElementById('start-btn');
+            const readyMsg = document.getElementById('ready-msg');
+            
+            countdownEl.textContent = count;
+            
+            countdownTimer = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdownEl.textContent = count;
+                } else {
+                    clearInterval(countdownTimer);
+                    countdownEl.textContent = '';
+                    readyMsg.style.display = 'block';
+                    startBtn.disabled = false;
+                }
+            }, 1000);
+        }
+        
+        // Timeline for text appearances (in seconds)
+        const timeline = {
+            0: () => { showStage('wonderment'); setPhase(1); },
+            101: () => { showLine('line1'); showStage('wanderlust'); setPhase(2); },  // 1:41
+            115: () => showLine('line2'),  // 1:55
+            125: () => showLine('line3'),  // 2:05
+            175: () => showLine('line4'),  // 2:55
+            195: () => showLine('line5'),  // 3:15
+            199: () => { showLine('line6'); showStage('wonderlust'); setPhase(3); },  // 3:19
+            235: () => showLine('line7'),  // 3:55
+            242: () => showLine('line8'),  // 4:02
+            262: () => showLine('line9'),  // 4:22
+            282: () => showLine('line10'), // 4:42
+            420: () => { showLine('line11'); showStage('wondering'); }  // 7:00
+        };
+        
+        function setPhase(phase) {
+            const bg = document.getElementById('video-background');
+            bg.className = `phase-${phase}`;
+        }
+        
+        document.getElementById('start-btn').addEventListener('click', startExperience);
+        
+        function startExperience() {
+            document.getElementById('instructions').style.display = 'none';
+            document.getElementById('controls').style.display = 'block';
+            document.getElementById('progress-bar').style.display = 'block';
+            
+            startTime = Date.now();
+            isRunning = true;
+            
+            startAgeCounter();
+            scheduleTextAppearances();
+            updateProgress();
+        }
+        
+        function updateProgress() {
+            if (!isRunning) return;
+            
+            const elapsed = (Date.now() - startTime) / 1000;
+            const progress = Math.min((elapsed / TOTAL_DURATION) * 100, 100);
+            document.getElementById('progress').style.width = progress + '%';
+            
+            if (elapsed < TOTAL_DURATION) {
+                animationFrame = requestAnimationFrame(updateProgress);
+            } else {
+                stopExperience();
+            }
+        }
+        
+        function startAgeCounter() {
+            ageInterval = setInterval(() => {
+                currentAge += 2;
+                document.getElementById('age-counter').textContent = currentAge + ' years';
+            }, 10000); // Every 10 seconds
+        }
+        
+        function stopAgeCounter() {
+            if (ageInterval) {
+                clearInterval(ageInterval);
+            }
+        }
+        
+        function stopExperience() {
+            isRunning = false;
+            stopAgeCounter();
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+            }
+        }
+        
+        function scheduleTextAppearances() {
+            // Clear any existing timeouts
+            textTimeout.forEach(t => clearTimeout(t));
+            textTimeout = [];
+            
+            // Schedule each text appearance
+            Object.keys(timeline).forEach(time => {
+                const timeout = setTimeout(() => {
+                    timeline[time]();
+                }, time * 1000);
+                textTimeout.push(timeout);
+            });
+        }
+        
+        function showTitle() {
+            document.getElementById('title').classList.add('visible');
+            setTimeout(() => {
+                document.getElementById('title').style.display = 'none';
+            }, 100000);
+        }
+        
+        function showStage(stageName) {
+            const label = document.getElementById('stage-label');
+            label.textContent = stageName;
+            label.classList.add('visible');
+        }
+        
+        function showLine(lineId) {
+            document.getElementById(lineId).classList.add('visible');
+        }
+        
+        // Control buttons
+        document.getElementById('play-pause').addEventListener('click', () => {
+            if (isRunning) {
+                // Pause
+                isRunning = false;
+                stopAgeCounter();
+                if (animationFrame) {
+                    cancelAnimationFrame(animationFrame);
+                }
+                textTimeout.forEach(t => clearTimeout(t));
+                document.getElementById('play-pause').textContent = 'Resume';
+            } else {
+                // Resume
+                isRunning = true;
+                startTime = Date.now() - (parseFloat(document.getElementById('progress').style.width) / 100 * TOTAL_DURATION * 1000);
+                startAgeCounter();
+                scheduleTextAppearances();
+                updateProgress();
+                document.getElementById('play-pause').textContent = 'Pause';
+            }
+        });
+        
+        document.getElementById('restart').addEventListener('click', () => {
+            stopExperience();
+            
+            // Reset everything
+            currentAge = 0;
+            document.getElementById('age-counter').textContent = '0 years';
+            document.getElementById('progress').style.width = '0%';
+            
+            // Reset all text
+            document.getElementById('stage-label').textContent = '';
+            document.getElementById('stage-label').classList.remove('visible');
+            document.querySelectorAll('.text-line').forEach(line => {
+                line.classList.remove('visible');
+            });
+            
+            setPhase(1);
+            
+            // Restart
+            startExperience();
+        });
+    </script>
+</body>
+</html>
